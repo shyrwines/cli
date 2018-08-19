@@ -27,8 +27,6 @@ def download_jpg(site, dst):
 
 
 def find(wines, image_path):
-  """TODO: Convert JPEG to JPG"""
-
   missing = list(filter(lambda w: not w['image'], wines.values()))
   print('Out of {} wines, {} are missing images.'.format(len(wines), len(missing)))
 
@@ -47,6 +45,6 @@ def find(wines, image_path):
 
     if site[-4:] == '.png':
       download_png(site, dst)
-    elif site[-4:] == '.jpg':
+    elif site[-4:] == '.jpg' or site[-5:] == '.jpeg':
       download_jpg(site, dst)
     print('{}Successfully downloaded {}{}\n'.format('\u001b[32m', name, '\u001b[0m'))
