@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-from . import excel, image, s3, square
+from . import excel, s3, square
 
 
 BASE_DIR = os.path.expanduser('~/Dropbox/Shyr/')
@@ -57,16 +57,12 @@ def main():
     help='Sync only images with S3 and Square.')
   group.add_argument('-f', '--factsheets', action='store_true',
     help='Sync only factsheets with S3.')
-  group.add_argument('-p', '--program', action='store_true',
-    help=argparse.SUPPRESS)
 
   args = parser.parse_args()
 
   if args.sync or args.wines or args.images:
     square_wines = square.download_wines()
 
-  if args.program:
-    image.find(load_new_wines(), IMAGE_PATH)
   if args.sync or args.wines:
     sync_wines(square_wines)
   if args.sync or args.images:

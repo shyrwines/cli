@@ -5,6 +5,8 @@ import webbrowser
 
 from PIL import Image
 
+from . import shyr
+
 
 def download_png(site, dst):
   if site[:4] == 'http':
@@ -48,3 +50,11 @@ def find(wines, image_path):
     elif site[-4:] == '.jpg' or site[-5:] == '.jpeg':
       download_jpg(site, dst)
     print('{}Successfully downloaded {}{}\n'.format('\u001b[32m', name, '\u001b[0m'))
+
+
+def main():
+  find(shyr.load_new_wines(), shyr.IMAGE_PATH)
+
+
+if __name__ == '__main__':
+  main()
