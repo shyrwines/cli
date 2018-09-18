@@ -42,7 +42,7 @@ def make_catalog_objects(old_wines, new_wines, square_map):
       for key in removed_keys:
         print('  Removed {} = {}'.format(key, old[key]))
       for key in diff_keys:
-        print('  Changed {}{}{} from\n    {}{}{}\n    to\n    {}{}{}'.format(
+        print('  Changed {}{}{} from {}{}{} to {}{}{}'.format(
           BLUE, key, RESET, RED, old[key], RESET, GREEN, new[key], RESET))
 
       # Update Square only if Name, Description, or Price has changed
