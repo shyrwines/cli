@@ -21,16 +21,12 @@ def load_new_wines():
   return excel.read(EXCEL_FILE, IMAGE_PATH, FACTSHEET_PATH)
 
 
-def sync_wines():
+def sync_wines(square_wines):
   with open(JSON_FILE) as fp:
     old_wines = json.load(fp)
   new_wines = load_new_wines()
 
-  # Load SKU -> Square ID mapping
-  with open(SQUARE_FILE) as fp:
-    square_map = json.load(fp)
-
-  catalog_objects = square.make_catalog_objects(old_wines, new_wines, square_map)
+  catalog_objects = square.make_catalog_objects(old_wines, new_wines, square_wines)
 
   if not catalog_objects:
     print('No differences.')
@@ -41,13 +37,8 @@ def sync_wines():
     print('Aborted.')
     sys.exit()
 
-  square_map = square.update(catalog_objects, square_map)
-  if not square_map:
-    print('Upload to Square failed.')
-    return
+  square.update(catalog_objects)
 
-  with open(SQUARE_FILE, 'w') as fp:
-    json.dump(square_map, fp)
   with open(JSON_FILE, 'w') as fp:
     json.dump(new_wines, fp, separators=(',', ':'))
   s3.upload(JSON_FILE)
@@ -71,13 +62,16 @@ def main():
 
   args = parser.parse_args()
 
+  if args.sync or args.wines or args.images:
+    square_wines = square.download_wines()
+
   if args.program:
     image.find(load_new_wines(), IMAGE_PATH)
   if args.sync or args.wines:
-    sync_wines()
+    sync_wines(square_wines)
   if args.sync or args.images:
     s3.sync(IMAGES_DIR, 'images/wines')
-    square.sync_images(IMAGE_PATH)
+    square.sync_images(IMAGE_PATH, square_wines)
   if args.sync or args.factsheets:
     s3.sync(FACTSHEETS_DIR, 'factsheets')
   if len(sys.argv) == 1:

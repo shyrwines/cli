@@ -82,7 +82,7 @@ def make_catalog_object(wine, square_data={}):
   )
 
 
-def update(objects, square_map):
+def update(objects):
   api = CatalogApi()
   idempotency_key = str(uuid.uuid4())
   try:
@@ -94,58 +94,43 @@ def update(objects, square_map):
     )
   except ApiException as e:
     print('Encountered error(s):', e)
-    return False
-
-  for wine in response.objects:
-    variation = wine.item_data.variations[0]
-    square_map[variation.item_variation_data.sku] = {
-      'item_id': wine.id,
-      'variation_id': variation.id,
-      'item_version': wine.version,
-      'variation_version': variation.version
-    }
-  return square_map
 
 
-def sync_images(image_path):
-  for wine in download_wines():
-    image = image_path.format(wine.item_data.variations[0].item_variation_data.sku)
-    if not wine.item_data.image_url and os.path.isfile(image):
-      print('Uploading image for ' + wine.item_data.name, end='', flush=True)
-      r = upload_image(image, wine)
+def sync_images(image_path, square_wines):
+  for sku, wine in square_wines.items():
+    image = image_path.format(sku)
+    if not wine['image_exists'] and os.path.isfile(image):
+      print('Uploading image for ' + wine['name'], end='', flush=True)
+      r = upload_image(image, wine['item_id_image'])
       if not r.ok:
         raise RuntimeError(r.text)
       print(u' \u2714')
 
 
-def upload_image(image, wine):
-  item_id = wine.catalog_v1_ids[0].catalog_v1_id if wine.catalog_v1_ids else wine.id
+def upload_image(image, item_id):
   files = [('image_data', (image, open(image, 'rb'), 'image/jpeg'))]
   return requests.post(IMAGE_URL.format(item_id), headers=HEADERS, files=files)
 
 
 def download_wines():
-  wines = []
+  wines = {}
   api = CatalogApi()
   response = api.list_catalog(types='ITEM')
   while True:
-    wines.extend(response.objects)
+    for wine in response.objects:
+      variation = wine.item_data.variations[0]
+      wines[variation.item_variation_data.sku] = {
+        'image_exists': wine.item_data.image_url != None,
+        'item_id': wine.id,
+        'item_id_image': wine.catalog_v1_ids[0].catalog_v1_id if wine.catalog_v1_ids else wine.id,
+        'item_version': wine.version,
+        'name': wine.item_data.name,
+        'variation_id': variation.id,
+        'variation_version': variation.version,
+      }
     print('\rDownloaded {} wines'.format(len(wines)), end='')
     if not response.cursor:
       break
     response = api.list_catalog(cursor=response.cursor, types='ITEM')
   print(u' \u2714')
   return wines
-
-
-def get_square_map():
-  square_map = {}
-  for wine in download_wines():
-    variation = wine.item_data.variations[0]
-    square_map[variation.item_variation_data.sku] = {
-      'item_id': wine.id,
-      'variation_id': variation.id,
-      'item_version': wine.version,
-      'variation_version': variation.version
-    }
-  return square_map
