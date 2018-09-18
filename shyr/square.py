@@ -22,7 +22,7 @@ HEADERS = {'Authorization': 'Bearer ' + SQUARE_ACCESS_TOKEN}
 squareconnect.configuration.access_token = SQUARE_ACCESS_TOKEN
 
 
-def make_catalog_objects(old_wines, new_wines, square_map):
+def make_catalog_objects(old_wines, new_wines, square_wines):
   new_wines = sorted(new_wines.values(), key=lambda w: w['SKU'])
   old_wines = sorted(old_wines.values(), key=lambda w: w['SKU'])
 
@@ -48,7 +48,7 @@ def make_catalog_objects(old_wines, new_wines, square_map):
 
       # Update Square only if Name, Description, or Price has changed
       if all_keys.intersection({'Name', 'Description', 'Price'}):
-        objects.append(make_catalog_object(new, square_map[str(new['SKU'])]))
+        objects.append(make_catalog_object(new, square_wines[str(new['SKU'])]))
 
   for i in range(len(old_wines), len(new_wines)):
     print('\nNew wine:', new_wines[i]['Name'])
@@ -57,10 +57,10 @@ def make_catalog_objects(old_wines, new_wines, square_map):
   return objects
 
 
-def make_catalog_object(wine, square_data={}):
+def make_catalog_object(wine, square_wine={}):
   return CatalogObject(
-    id=square_data.get('item_id', '#{}'.format(wine['SKU'])),
-    version=square_data.get('item_version'),
+    id=square_wine.get('item_id', '#{}'.format(wine['SKU'])),
+    version=square_wine.get('item_version'),
     type='ITEM',
     present_at_all_locations=True,
     item_data=CatalogItem(
@@ -68,8 +68,8 @@ def make_catalog_object(wine, square_data={}):
       description=wine.get('Description', ''),
       tax_ids=[TAX_ID],
       variations=[CatalogObject(
-        id=square_data.get('variation_id', '#{}Variation'.format(wine['SKU'])),
-        version=square_data.get('variation_version'),
+        id=square_wine.get('variation_id', '#{}Variation'.format(wine['SKU'])),
+        version=square_wine.get('variation_version'),
         type='ITEM_VARIATION',
         present_at_all_locations=True,
         item_variation_data=CatalogItemVariation(
