@@ -10,6 +10,7 @@ from squareconnect.models.catalog_item_variation import CatalogItemVariation
 from squareconnect.models.catalog_object import CatalogObject
 from squareconnect.models.catalog_object_batch import CatalogObjectBatch
 from squareconnect.models.money import Money
+from squareconnect.rest import ApiException
 
 
 SQUARE_ACCESS_TOKEN = os.environ['SQUARE_ACCESS_TOKEN']
@@ -84,14 +85,15 @@ def make_catalog_object(wine, square_data={}):
 def update(objects, square_map):
   api = CatalogApi()
   idempotency_key = str(uuid.uuid4())
-  response = api.batch_upsert_catalog_objects(
-    BatchUpsertCatalogObjectsRequest(
-      idempotency_key=idempotency_key,
-      batches=[CatalogObjectBatch(objects)]
+  try:
+    response = api.batch_upsert_catalog_objects(
+      BatchUpsertCatalogObjectsRequest(
+        idempotency_key=idempotency_key,
+        batches=[CatalogObjectBatch(objects)]
+      )
     )
-  )
-  if response.errors:
-    print('Encountered error(s):', response.errors)
+  except ApiException as e:
+    print('Encountered error(s):', e)
     return False
 
   for wine in response.objects:
