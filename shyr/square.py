@@ -128,7 +128,7 @@ def download_wines():
         'variation_id': variation.id,
         'variation_version': variation.version,
       }
-    print('\rDownloaded {} wines'.format(len(wines)), end='')
+    print('\rDownloaded {} wines from Square'.format(len(wines)), end='')
     if not response.cursor:
       break
     response = api.list_catalog(cursor=response.cursor, types='ITEM')

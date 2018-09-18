@@ -29,7 +29,7 @@ def sync_wines(square_wines):
   catalog_objects = square.make_catalog_objects(old_wines, new_wines, square_wines)
 
   if not catalog_objects:
-    print('No differences.')
+    print('No new changes in ShyrWineList.xlsx.')
     return
 
   u = input('\nOK with these changes? (y/n) ')
