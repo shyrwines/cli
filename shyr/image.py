@@ -34,8 +34,6 @@ def main():
   print('Out of {} wines, {} are missing images.'.format(len(e), len(missing)))
 
   for name, sku in missing.itertuples(False, None):
-    dst = util.IMAGE_PATH.format(sku)
-
     print('Searching for {}, SKU number {}'.format(name, sku))
     webbrowser.open('https://www.google.com/search?q=' + quote_plus(name))
 
@@ -43,12 +41,17 @@ def main():
     if not site:
       continue
     if site == 'q':
-      break
+      return
 
-    if site[-4:] == '.png':
+    dst = util.IMAGE_PATH.format(sku)
+    ext = os.path.splitext(site)[1]
+    if ext == '.png':
       download_png(site, dst)
-    elif site[-4:] == '.jpg' or site[-5:] == '.jpeg':
+    elif ext in {'.jpg', '.jpeg'}:
       download_jpg(site, dst)
+    else:
+      print('Unrecognized file extension', ext)
+      return
     print(util.color('Successfully downloaded ' + name, util.GREEN))
 
 
