@@ -1,4 +1,4 @@
-Pillow==5.2.0
-requests==2.19.1
-squareconnect==2.20180712.3
-xlrd==1.1.0
+pandas==0.23.4
+Pillow==5.3.0
+requests==2.20.0
+squareconnect==2.20180918.1

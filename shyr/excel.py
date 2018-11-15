@@ -1,42 +1,35 @@
 import os
-import re
-import unicodedata
 
-import xlrd
+import pandas as pd
 
-
-STRINGS = {'Name', 'Vintage', 'Winery', 'Country', 'Region', 'Appellation', 'Varietal', 'Type', 'Description'}
-RATERS = {'JH', 'JS', 'RP', 'ST', 'AG', 'D', 'WA', 'WE', 'WS', 'W&S', 'WW'}
-COLUMNS = STRINGS | RATERS
-NONALPHANUMERIC = re.compile(r'[^\w\s-]')
-WHITESPACE = re.compile(r'[-\s]+')
+from . import util
 
 
-def read(filename, image_path, factsheet_path):
-  rows = xlrd.open_workbook(filename).sheet_by_index(0).get_rows()
-  headers = [c.value for c in next(rows)]
-  header_map = {h: headers.index(h) for h in headers}
+DROP = ['Cost', 'Rev Margin', 'Margin']
+INTEGERS = ['Count', 'JH', 'JS', 'RP', 'ST', 'AG', 'D', 'WA', 'WE', 'WS', 'W&S', 'WW']
 
-  wines = {}
-  for row in rows:
-    if row[header_map['No-Adv']].value == 'N':
-      continue
 
-    sku = int(row[header_map['SKU']].value)
-    wine = {
-      'Count': 1 if row[header_map['Count']].ctype == xlrd.XL_CELL_EMPTY else 0,
-      'Price': round(row[header_map['Price']].value * 100),
-      'SKU': sku,
-      'image': os.path.isfile(image_path.format(sku)),
-      'factsheet': os.path.isfile(factsheet_path.format(sku))
-    }
-    for column in COLUMNS:
-      cell = row[header_map[column]]
-      if cell.ctype != xlrd.XL_CELL_EMPTY:
-        wine[column] = cell.value if column in STRINGS else int(cell.value)
+class Excel(object):
+  def __init__(self):
+    dtype = {i: object for i in INTEGERS}
+    self.df = pd.read_excel(util.EXCEL_FILE, dtype=dtype).drop(DROP, axis=1)
+    self.df['Price'] = self.df['Price'].apply(lambda x: round(x * 100))
 
-    wine_id = WHITESPACE.sub('-', NONALPHANUMERIC.sub('',
-      unicodedata.normalize('NFKC', row[0].value).strip().lower()))
-    wines[wine_id] = wine
+  def __len__(self):
+    return len(self.df)
 
-  return wines
+  def square(self):
+    df = self.df.set_index('SKU')[['Name', 'Description', 'Price']]
+    df.index = df.index.astype(str)
+    df['Description'].fillna('', inplace=True)
+    return df.to_dict('index')
+
+  def firebase(self):
+    df = self.df[self.df['No-Adv'] != 'N'].copy()
+    df['Count'].fillna(1, inplace=True)
+    df.loc[:,'factsheet'] = df['SKU'].apply(lambda x: os.path.isfile(util.FACTSHEET_PATH.format(x)))
+    df.index = df['Name'].apply(lambda x: util.tokenize(x))
+    return {i: {k:v for k,v in d.items() if pd.notnull(v)} for i,d in df.to_dict('index').items()}
+
+  def missing(self):
+    return self.df[self.df['SKU'].apply(lambda x: not os.path.isfile(util.IMAGE_PATH.format(x)))][['Name', 'SKU']].copy()

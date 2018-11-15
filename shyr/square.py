@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 
@@ -12,54 +13,33 @@ from squareconnect.models.catalog_object_batch import CatalogObjectBatch
 from squareconnect.models.money import Money
 from squareconnect.rest import ApiException
 
+from . import util
 
-SQUARE_ACCESS_TOKEN = os.environ['SQUARE_ACCESS_TOKEN']
-LOCATION_ID = os.environ['SQUARE_LOCATION_ID']
-TAX_ID = os.environ['SQUARE_TAX_ID']
-RED, GREEN, BLUE, RESET = '\u001b[31m', '\u001b[32m', '\u001b[34m', '\u001b[0m'
+
+env = util.load(util.ENV_FILE)
+SQUARE_ACCESS_TOKEN = env['SQUARE_ACCESS_TOKEN']
+LOCATION_ID = env['SQUARE_LOCATION_ID']
+TAX_ID = env['SQUARE_TAX_ID']
 IMAGE_URL = 'https://connect.squareup.com/v1/' + LOCATION_ID + '/items/{}/image'
 HEADERS = {'Authorization': 'Bearer ' + SQUARE_ACCESS_TOKEN}
-squareconnect.configuration.access_token = SQUARE_ACCESS_TOKEN
 
 
-def make_catalog_objects(old_wines, new_wines, square_wines):
-  new_wines = sorted(new_wines.values(), key=lambda w: w['SKU'])
-  old_wines = sorted(old_wines.values(), key=lambda w: w['SKU'])
-
+def make_catalog_objects(new_wines):
+  square_wines = util.load(util.SQUARE_FILE)
   objects = []
-  for i in range(len(old_wines)):
-    old, new = old_wines[i], new_wines[i]
-    old_keys, new_keys = set(old.keys()), set(new.keys())
-
-    added_keys = new_keys - old_keys
-    removed_keys = old_keys - new_keys
-    diff_keys = {k for k in old_keys.intersection(new_keys) if new[k] != old[k]}
-
-    all_keys = added_keys | removed_keys | diff_keys
-    if all_keys:
-      print('\n' + new['Name'])
-      for key in added_keys:
-        print('  Added {} = {}'.format(key, new[key]))
-      for key in removed_keys:
-        print('  Removed {} = {}'.format(key, old[key]))
-      for key in diff_keys:
-        print('  Changed {}{}{} from {}{}{} to {}{}{}'.format(
-          BLUE, key, RESET, RED, old[key], RESET, GREEN, new[key], RESET))
-
-      # Update Square only if Name, Description, or Price has changed
-      if all_keys.intersection({'Name', 'Description', 'Price'}):
-        objects.append(make_catalog_object(new, square_wines[str(new['SKU'])]))
-
-  for i in range(len(old_wines), len(new_wines)):
-    print('\nNew wine:', new_wines[i]['Name'])
-    objects.append(make_catalog_object(new_wines[i]))
-
+  for sku, new in sorted(new_wines.items()):
+    if sku in square_wines:
+      if util.print_diff(square_wines[sku], new, {'Name', 'Description', 'Price'}):
+        objects.append(make_catalog_object(new, sku, square_wines[sku]))
+    else:
+      print('\nNew wine:', new['Name'])
+      objects.append(make_catalog_object(new, sku))
   return objects
 
 
-def make_catalog_object(wine, square_wine={}):
+def make_catalog_object(wine, sku, square_wine={}):
   return CatalogObject(
-    id=square_wine.get('item_id', '#{}'.format(wine['SKU'])),
+    id=square_wine.get('item_id', '#{}'.format(sku)),
     version=square_wine.get('item_version'),
     type='ITEM',
     present_at_all_locations=True,
@@ -68,12 +48,12 @@ def make_catalog_object(wine, square_wine={}):
       description=wine.get('Description', ''),
       tax_ids=[TAX_ID],
       variations=[CatalogObject(
-        id=square_wine.get('variation_id', '#{}Variation'.format(wine['SKU'])),
+        id=square_wine.get('variation_id', '#{}Variation'.format(sku)),
         version=square_wine.get('variation_version'),
         type='ITEM_VARIATION',
         present_at_all_locations=True,
         item_variation_data=CatalogItemVariation(
-          sku=str(wine['SKU']),
+          sku=sku,
           price_money=Money(wine['Price'], 'USD'),
           pricing_type='FIXED_PRICING'
         )
@@ -84,6 +64,7 @@ def make_catalog_object(wine, square_wine={}):
 
 def update(objects):
   api = CatalogApi()
+  api.api_client.configuration.access_token = SQUARE_ACCESS_TOKEN
   idempotency_key = str(uuid.uuid4())
   try:
     response = api.batch_upsert_catalog_objects(
@@ -96,15 +77,19 @@ def update(objects):
     print('Encountered error(s):', e)
 
 
-def sync_images(image_path, square_wines):
-  for sku, wine in square_wines.items():
-    image = image_path.format(sku)
-    if not wine['image_exists'] and os.path.isfile(image):
-      print('Uploading image for ' + wine['name'], end='', flush=True)
-      r = upload_image(image, wine['item_id_image'])
-      if not r.ok:
-        raise RuntimeError(r.text)
-      print(u' \u2714')
+def sync_images():
+  square_wines = util.load(util.SQUARE_FILE)
+  local = {os.path.splitext(f)[0] for f in os.listdir(util.BASE_DIR + util.IMAGES_DIR)}
+  no_square = {sku for sku, w in square_wines.items() if not w['image_exists']}
+  skus_to_upload = local & no_square
+  for sku in skus_to_upload:
+    print('[Square] Uploading', sku + '.jpg', end='', flush=True)
+    r = upload_image(util.IMAGE_PATH.format(sku), square_wines[sku]['item_id_image'])
+    if not r.ok:
+      raise RuntimeError(r.text)
+    print(util.CHECKMARK)
+  print('[Square]', util.IMAGES_DIR, 'synced.')
+  return len(skus_to_upload) != 0
 
 
 def upload_image(image, item_id):
@@ -115,22 +100,28 @@ def upload_image(image, item_id):
 def download_wines():
   wines = {}
   api = CatalogApi()
+  api.api_client.configuration.access_token = SQUARE_ACCESS_TOKEN
   response = api.list_catalog(types='ITEM')
   while True:
     for wine in response.objects:
       variation = wine.item_data.variations[0]
+      if not variation.item_variation_data.price_money:
+        # Exclude Shipping & Handling, which has no price
+        continue
       wines[variation.item_variation_data.sku] = {
         'image_exists': wine.item_data.image_url != None,
         'item_id': wine.id,
         'item_id_image': wine.catalog_v1_ids[0].catalog_v1_id if wine.catalog_v1_ids else wine.id,
         'item_version': wine.version,
-        'name': wine.item_data.name,
         'variation_id': variation.id,
         'variation_version': variation.version,
+        'Name': wine.item_data.name,
+        'Price': variation.item_variation_data.price_money.amount,
+        'Description': wine.item_data.description or '',
       }
     print('\rDownloaded {} wines from Square'.format(len(wines)), end='')
     if not response.cursor:
       break
     response = api.list_catalog(cursor=response.cursor, types='ITEM')
-  print(u' \u2714')
-  return wines
+  util.save(wines, util.SQUARE_FILE)
+  print(util.CHECKMARK)

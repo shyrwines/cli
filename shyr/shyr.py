@@ -3,45 +3,41 @@ import json
 import os
 import sys
 
-from . import excel, s3, square
+from . import excel, firebase, square, util
 
 
-BASE_DIR = os.path.expanduser('~/Dropbox/Shyr/')
-EXCEL_FILE = BASE_DIR + 'ShyrWineList.xlsx'
-JSON_FILE = BASE_DIR + 'wines.json'
-SQUARE_FILE = BASE_DIR + 'square.json'
-IMAGES_DIR = BASE_DIR + 'images/'
-FACTSHEETS_DIR = BASE_DIR + 'factsheets/'
-
-IMAGE_PATH = IMAGES_DIR + '{}.jpg'
-FACTSHEET_PATH = FACTSHEETS_DIR + '{}.pdf'
-
-
-def load_new_wines():
-  return excel.read(EXCEL_FILE, IMAGE_PATH, FACTSHEET_PATH)
-
-
-def sync_wines(square_wines):
-  with open(JSON_FILE) as fp:
-    old_wines = json.load(fp)
-  new_wines = load_new_wines()
-
-  catalog_objects = square.make_catalog_objects(old_wines, new_wines, square_wines)
-
-  if not catalog_objects:
-    print('No new changes in ShyrWineList.xlsx.')
-    return
-
-  u = input('\nOK with these changes? (y/n) ')
-  if u != 'y' and u != 'yes':
-    print('Aborted.')
-    sys.exit()
-
+def sync_square(catalog_objects):
   square.update(catalog_objects)
+  print('Updated Square.')
 
-  with open(JSON_FILE, 'w') as fp:
-    json.dump(new_wines, fp, separators=(',', ':'))
-  s3.upload(JSON_FILE)
+
+def sync_firebase(firebase_wines):
+  util.save(firebase_wines, util.FIREBASE_FILE)
+  firebase.upload(util.FIREBASE_FILE, os.path.basename(util.FIREBASE_FILE))
+  print('Updated website.')
+
+
+def prompt_and_sync(diffs, sync_function):
+  if diffs:
+    u = input('\nOK with these changes? (y/n) ')
+    if u == 'y' or u == 'yes':
+      sync_function()
+      return True
+    else:
+      print('Aborted.')
+  else:
+    print('No sync required.')
+  return False
+
+
+def sync_wines():
+  e = excel.Excel()
+  print('Firebase:')
+  firebase_wines = e.firebase()
+  prompt_and_sync(util.diff_firebase(firebase_wines), lambda: sync_firebase(firebase_wines))
+  print('Square:')
+  catalog_objects = square.make_catalog_objects(e.square())
+  return prompt_and_sync(catalog_objects, lambda: sync_square(catalog_objects))
 
 
 def main():
@@ -50,28 +46,31 @@ def main():
 
   group = parser.add_mutually_exclusive_group()
   group.add_argument('-s', '--sync', action='store_true',
-    help='Sync ShyrWineList.xlsx, images, and factsheets with S3 and Square.')
+    help='Sync ShyrWineList.xlsx, images, and factsheets with website and Square.')
   group.add_argument('-w', '--wines', action='store_true',
-    help='Sync only ShyrWineList.xlsx with S3 and Square.')
+    help='Sync only ShyrWineList.xlsx with website and Square.')
   group.add_argument('-i', '--images', action='store_true',
-    help='Sync only images with S3 and Square.')
+    help='Sync only images with website and Square.')
   group.add_argument('-f', '--factsheets', action='store_true',
-    help='Sync only factsheets with S3.')
+    help='Sync only factsheets with website.')
+  group.add_argument('-d', '--download', action='store_true',
+    help=argparse.SUPPRESS)
 
-  args = parser.parse_args()
-
-  if args.sync or args.wines or args.images:
-    square_wines = square.download_wines()
-
-  if args.sync or args.wines:
-    sync_wines(square_wines)
-  if args.sync or args.images:
-    s3.sync(IMAGES_DIR, 'images/wines')
-    square.sync_images(IMAGE_PATH, square_wines)
-  if args.sync or args.factsheets:
-    s3.sync(FACTSHEETS_DIR, 'factsheets')
   if len(sys.argv) == 1:
     parser.print_help()
+    return
+
+  args = parser.parse_args()
+  wines_synced = images_uploaded = False
+  if args.sync or args.wines:
+    wines_synced = sync_wines()
+  if args.sync or args.images:
+    firebase.sync(util.IMAGES_DIR)
+    images_uploaded = square.sync_images()
+  if args.sync or args.factsheets:
+    firebase.sync(util.FACTSHEETS_DIR)
+  if wines_synced or images_uploaded or args.download:
+    square.download_wines()
 
 
 if __name__ == '__main__':

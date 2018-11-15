@@ -5,7 +5,7 @@ import webbrowser
 
 from PIL import Image
 
-from . import shyr
+from . import excel, util
 
 
 def download_png(site, dst):
@@ -28,13 +28,13 @@ def download_jpg(site, dst):
     os.rename(site, dst)
 
 
-def find(wines, image_path):
-  missing = list(filter(lambda w: not w['image'], wines.values()))
-  print('Out of {} wines, {} are missing images.'.format(len(wines), len(missing)))
+def main():
+  e = excel.Excel()
+  missing = excel.Excel().missing()
+  print('Out of {} wines, {} are missing images.'.format(len(e), len(missing)))
 
-  for wine in missing:
-    name, sku = wine['Name'], wine['SKU']
-    dst = image_path.format(sku)
+  for name, sku in missing.itertuples(False, None):
+    dst = util.IMAGE_PATH.format(sku)
 
     print('Searching for {}, SKU number {}'.format(name, sku))
     webbrowser.open('https://www.google.com/search?q=' + quote_plus(name))
@@ -49,11 +49,7 @@ def find(wines, image_path):
       download_png(site, dst)
     elif site[-4:] == '.jpg' or site[-5:] == '.jpeg':
       download_jpg(site, dst)
-    print('{}Successfully downloaded {}{}\n'.format('\u001b[32m', name, '\u001b[0m'))
-
-
-def main():
-  find(shyr.load_new_wines(), shyr.IMAGE_PATH)
+    print(util.color('Successfully downloaded ' + name, util.GREEN))
 
 
 if __name__ == '__main__':
