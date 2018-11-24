@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import unicodedata
@@ -8,6 +9,7 @@ EXCEL_FILE = BASE_DIR + 'ShyrWineList.xlsx'
 ENV_FILE = BASE_DIR + 'cli/env.json'
 SQUARE_FILE = BASE_DIR + 'cli/square.json'
 FIREBASE_FILE = BASE_DIR + 'cli/wines.json'
+LOG_FILE = BASE_DIR + 'cli/log.txt'
 IMAGES_DIR = 'wine-images/'
 IMAGE_PATH = BASE_DIR + IMAGES_DIR + '{}.jpg'
 FACTSHEETS_DIR = 'factsheets/'
@@ -52,14 +54,13 @@ def print_diff(old, new, keys=None):
 
   all_keys = added_keys | removed_keys | diff_keys
   if all_keys:
-    print(new['Name'])
+    logging.debug(f'Changed {new["Name"]}:')
     for key in added_keys:
-      print('  Added {} = {}'.format(key, new[key]))
+      logging.debug(f'  Added {key} = {new[key]}')
     for key in removed_keys:
-      print('  Removed {} = {}'.format(key, old[key]))
+      logging.debug(f'  Removed {key} = {old[key]}')
     for key in diff_keys:
-      print('  Changed {} from {} to {}'.format(
-        color(key, BLUE), color(old[key], RED, key), color(new[key], GREEN, key)))
+      logging.debug(f'  Changed {key} from {old[key]} to {new[key]}')
     return True
   return False
 
@@ -75,8 +76,8 @@ def diff_firebase(new_wines):
   for wine_id in both_wines:
     print_diff(old_wines[wine_id], new_wines[wine_id])
   for wine_id in removed_wines:
-    print('Removed ' + color(old_wines[wine_id], RED))
+    logging.debug('Removed ' + old_wines[wine_id]['Name'])
   for wine_id in added_wines:
-    print('Added ' + color(new_wines[wine_id], GREEN))
+    logging.debug('Added ' + new_wines[wine_id]['Name'])
 
   return old_wines != new_wines

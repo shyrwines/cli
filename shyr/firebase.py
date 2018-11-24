@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import os
 from pytz import timezone
 
@@ -14,9 +15,8 @@ bucket = storage.bucket()
 
 
 def upload(src, dst):
-  print('[Website] Uploading', os.path.basename(src), end='', flush=True)
   bucket.blob(dst).upload_from_filename(src)
-  print(util.CHECKMARK)
+  logging.debug('[Website] Uploaded ' + os.path.basename(src))
 
 
 def sync(directory):
@@ -28,4 +28,4 @@ def sync(directory):
     mtime = datetime.fromtimestamp(os.path.getmtime(local_path), timezone('US/Pacific'))
     if remote_path not in blobs or mtime > blobs[remote_path]:
       upload(local_path, remote_path)
-  print('[Website]', directory, 'synced.')
+  logging.debug(f'[Website] {directory} synced.')
