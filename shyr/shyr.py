@@ -32,7 +32,7 @@ def sync_wines():
 def main():
   for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
-  logging.basicConfig(filename=util.LOG_FILE, level=logging.DEBUG)
+  logging.basicConfig(filename=util.LOG_FILE, level=logging.INFO)
 
   wines_synced = sync_wines()
   firebase.sync(util.IMAGES_DIR)

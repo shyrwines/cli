@@ -33,7 +33,7 @@ def make_catalog_objects(new_wines):
       if util.print_diff(square_wines[sku], new, {'Name', 'Description', 'Price'}):
         objects.append(make_catalog_object(new, sku, square_wines[sku]))
     else:
-      logging.debug('New wine:', new['Name'])
+      logging.info('New wine:', new['Name'])
       objects.append(make_catalog_object(new, sku))
   return objects
 
@@ -84,11 +84,11 @@ def sync_images():
   no_square = {sku for sku, w in square_wines.items() if not w['image_exists']}
   skus_to_upload = local & no_square
   for sku in skus_to_upload:
-    logging.debug(f'[Square] Uploading {sku}.jpg')
+    logging.info(f'[Square] Uploading {sku}.jpg')
     r = upload_image(util.IMAGE_PATH.format(sku), square_wines[sku]['item_id_image'])
     if not r.ok:
       raise RuntimeError(r.text)
-  logging.debug(f'[Square] {util.IMAGES_DIR} synced.')
+  logging.info(f'[Square] {util.IMAGES_DIR} synced.')
   return len(skus_to_upload) != 0
 
 
@@ -123,4 +123,4 @@ def download_wines():
       break
     response = api.list_catalog(cursor=response.cursor, types='ITEM')
   util.save(wines, util.SQUARE_FILE)
-  logging.debug(f'Downloaded {len(wines)} wines from Square')
+  logging.info(f'Downloaded {len(wines)} wines from Square')

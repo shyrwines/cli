@@ -54,13 +54,13 @@ def print_diff(old, new, keys=None):
 
   all_keys = added_keys | removed_keys | diff_keys
   if all_keys:
-    logging.debug(f'Changed {new["Name"]}:')
+    logging.info(f'Changed {new["Name"]}:')
     for key in added_keys:
-      logging.debug(f'  Added {key} = {new[key]}')
+      logging.info(f'  Added {key} = {new[key]}')
     for key in removed_keys:
-      logging.debug(f'  Removed {key} = {old[key]}')
+      logging.info(f'  Removed {key} = {old[key]}')
     for key in diff_keys:
-      logging.debug(f'  Changed {key} from {old[key]} to {new[key]}')
+      logging.info(f'  Changed {key} from {old[key]} to {new[key]}')
     return True
   return False
 
@@ -76,8 +76,8 @@ def diff_firebase(new_wines):
   for wine_id in both_wines:
     print_diff(old_wines[wine_id], new_wines[wine_id])
   for wine_id in removed_wines:
-    logging.debug('Removed ' + old_wines[wine_id]['Name'])
+    logging.info('Removed ' + old_wines[wine_id]['Name'])
   for wine_id in added_wines:
-    logging.debug('Added ' + new_wines[wine_id]['Name'])
+    logging.info('Added ' + new_wines[wine_id]['Name'])
 
   return old_wines != new_wines
