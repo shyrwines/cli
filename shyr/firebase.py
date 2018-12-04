@@ -15,7 +15,8 @@ bucket = storage.bucket()
 
 
 def upload(src, dst):
-  bucket.blob(dst).upload_from_filename(src)
+  if not util.dry_run:
+    bucket.blob(dst).upload_from_filename(src)
   logging.info('[Firebase] Uploaded ' + os.path.basename(src))
 
 
@@ -28,4 +29,4 @@ def sync(directory):
     mtime = datetime.fromtimestamp(os.path.getmtime(local_path), timezone('US/Pacific'))
     if remote_path not in blobs or mtime > blobs[remote_path]:
       upload(local_path, remote_path)
-  logging.info(f'[Firebase] {directory} synced.')
+  logging.info(f'[Firebase] {directory} synced')

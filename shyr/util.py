@@ -19,10 +19,14 @@ NONALPHANUMERIC = re.compile(r'[^\w\s-]')
 WHITESPACE = re.compile(r'[-\s]+')
 CHECKMARK = u' \u2714'
 
+dry_run = False
+
 
 def save(obj, filename):
-  with open(filename, 'w') as fp:
-    json.dump(obj, fp, separators=(',', ':'))
+  if not dry_run:
+    with open(filename, 'w') as fp:
+      json.dump(obj, fp, separators=(',', ':'))
+  logging.info(f'Saved {filename}')
 
 
 def load(filename):
