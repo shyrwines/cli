@@ -76,9 +76,9 @@ def update(objects):
         )
       )
     except ApiException as e:
-      logging.error(f'Error while upserting catalog objects to Square: {e}')
+      logging.fatal(f'Error while upserting catalog objects: {e}')
       raise RuntimeError('Error while syncing with Square')
-  logging.info('[Square] Upserted catalog objects')
+  logging.info('Upserted catalog objects')
 
 
 def sync_images():
@@ -91,9 +91,9 @@ def sync_images():
       r = upload_image(util.IMAGE_PATH.format(sku), square_wines[sku]['item_id_image'])
       if not r.ok:
         logging.error(f'Error while uploading image to Square: {r.text}')
-        raise RuntimeError('Error while syncing wine images with Square')
-    logging.info(f'[Square] Uploaded {sku}.jpg')
-  logging.info(f'[Square] {util.IMAGES_DIR} synced')
+        continue
+    logging.info(f'Uploaded {sku}.jpg')
+  logging.info(f'{util.IMAGES_DIR} synced')
   return len(skus_to_upload) != 0
 
 
