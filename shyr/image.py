@@ -1,4 +1,6 @@
 import os
+import shutil
+import sys
 from urllib.parse import quote_plus
 from urllib.request import urlretrieve
 import webbrowser
@@ -33,9 +35,11 @@ def main():
   missing = excel.Excel().missing()
   print('Out of {} wines, {} are missing images.'.format(len(e), len(missing)))
 
-  for name, sku in missing.itertuples(False, None):
+  start_sku = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+  for name, sku in filter(lambda t: t[1] >= start_sku, missing.itertuples(False, None)):
     print('Searching for {}, SKU number {}'.format(name, sku))
-    webbrowser.open('https://www.google.com/search?q=' + quote_plus(name))
+    if sku != start_sku:
+      webbrowser.open('https://www.google.com/search?q=' + quote_plus(name))
 
     site = input('Enter site name ([Enter] to skip, q[uit]): ')
     if not site:
