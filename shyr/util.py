@@ -25,7 +25,7 @@ dry_run = True
 class LogFormatter(logging.Formatter):
   def format(self, record):
     location = '{0.module}.{0.funcName}:{0.lineno}'.format(record)
-    return '{0} {1:21} {2.levelname:>5}: {2.msg}'.format(self.formatTime(record), location, record)
+    return '{0} {1:25} {2.levelname:>5}: {2.msg}'.format(self.formatTime(record), location, record)
 
 
 def save(obj, filename):
