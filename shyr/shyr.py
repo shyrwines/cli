@@ -29,15 +29,19 @@ def sync_wines():
   return prompt_and_sync(catalog_objects, lambda: sync_square(catalog_objects))
 
 
+def initialize_logger():
+  for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+  handler = logging.StreamHandler() if util.dry_run else logging.FileHandler(util.LOG_FILE)
+  handler.setFormatter(util.LogFormatter())
+  logging.root.addHandler(handler)
+  logging.root.setLevel(logging.INFO)
+
+
 def main():
   util.dry_run = len(sys.argv) > 1 and sys.argv[1] == '--dry-run'
 
-  for handler in logging.root.handlers[:]:
-    logging.root.removeHandler(handler)
-  config = {'format': '%(asctime)s %(levelname)s: %(message)s', 'level': logging.INFO}
-  if not util.dry_run:
-    config['filename'] = util.LOG_FILE
-  logging.basicConfig(**config)
+  initialize_logger()
   logging.info(f'Begin Shyr script with dry_run = {util.dry_run}')
 
   wines_synced = sync_wines()

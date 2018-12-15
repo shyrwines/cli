@@ -19,7 +19,13 @@ NONALPHANUMERIC = re.compile(r'[^\w\s-]')
 WHITESPACE = re.compile(r'[-\s]+')
 CHECKMARK = u' \u2714'
 
-dry_run = False
+dry_run = True
+
+
+class LogFormatter(logging.Formatter):
+  def format(self, record):
+    location = '{0.module}.{0.funcName}:{0.lineno}'.format(record)
+    return '{0} {1:21} {2.levelname:>5}: {2.msg}'.format(self.formatTime(record), location, record)
 
 
 def save(obj, filename):
