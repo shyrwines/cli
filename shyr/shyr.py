@@ -32,9 +32,18 @@ def sync_wines():
 def initialize_logger():
   for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
-  handler = logging.StreamHandler() if util.dry_run else logging.FileHandler(util.LOG_FILE)
-  handler.setFormatter(util.LogFormatter())
-  logging.root.addHandler(handler)
+
+  stream_handler = logging.StreamHandler()
+  if util.dry_run:
+    stream_handler.setFormatter(util.LogFormatter())
+  else:
+    stream_handler.terminator = ' '*20
+    stream_handler.setFormatter(logging.Formatter('\r%(message)s'))
+    file_handler = logging.FileHandler(util.LOG_FILE)
+    file_handler.setFormatter(util.LogFormatter())
+    logging.root.addHandler(file_handler)
+
+  logging.root.addHandler(stream_handler)
   logging.root.setLevel(logging.INFO)
 
 
