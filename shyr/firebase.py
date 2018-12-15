@@ -42,6 +42,8 @@ def sync(directory):
   file_regex = re.compile(r'\d{7}\.' + EXTENSIONS[directory])
   blobs = {b.name: b.updated for b in bucket.list_blobs(prefix=directory)}
   for filename in os.listdir(local_dir):
+    if filename == '.DS_Store':
+      continue
     if not file_regex.match(filename):
       logging.error(f'{filename} is incorrectly formatted')
       continue
