@@ -41,7 +41,7 @@ def main():
     if sku != start_sku:
       webbrowser.open('https://www.google.com/search?q=' + quote_plus(name))
 
-    site = input('Enter site name ([Enter] to skip, q[uit]): ')
+    site = input('Enter site name ([Enter] to skip, q[uit]): ').strip()
     if not site:
       continue
     if site == 'q':
