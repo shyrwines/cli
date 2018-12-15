@@ -42,11 +42,11 @@ def download_jpg(site, dst):
 def main():
   e = excel.Excel()
   missing = excel.Excel().missing()
-  print('Out of {} wines, {} are missing images.'.format(len(e), len(missing)))
+  print(f'Out of {len(e)} wines, {(len(missing))} are missing images.')
 
   start_sku = int(sys.argv[1]) if len(sys.argv) > 1 else 0
   for name, sku in filter(lambda t: t[1] >= start_sku, missing.itertuples(False, None)):
-    print('Searching for {}, SKU number {}'.format(name, sku))
+    print(f'Searching for {name}, SKU number {sku}')
     if sku != start_sku:
       webbrowser.open('https://www.google.com/search?q=' + quote_plus(name))
 

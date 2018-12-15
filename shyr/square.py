@@ -40,7 +40,7 @@ def make_catalog_objects(new_wines):
 
 def make_catalog_object(wine, sku, square_wine={}):
   return CatalogObject(
-    id=square_wine.get('item_id', '#{}'.format(sku)),
+    id=square_wine.get('item_id', f'#{sku}'),
     version=square_wine.get('item_version'),
     type='ITEM',
     present_at_all_locations=True,
@@ -49,7 +49,7 @@ def make_catalog_object(wine, sku, square_wine={}):
       description=wine.get('Description', ''),
       tax_ids=[TAX_ID],
       variations=[CatalogObject(
-        id=square_wine.get('variation_id', '#{}Variation'.format(sku)),
+        id=square_wine.get('variation_id', f'#{sku}Variation'),
         version=square_wine.get('variation_version'),
         type='ITEM_VARIATION',
         present_at_all_locations=True,
@@ -129,4 +129,4 @@ def download_wines():
         break
       response = api.list_catalog(cursor=response.cursor, types='ITEM')
     util.save(wines, util.SQUARE_FILE)
-  logging.info(f'Downloaded wines from Square')
+  logging.info('Downloaded wines from Square')
