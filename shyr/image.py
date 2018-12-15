@@ -2,18 +2,27 @@ import os
 import shutil
 import sys
 from urllib.parse import quote_plus
-from urllib.request import urlretrieve
 import webbrowser
 
 from PIL import Image
+import requests
 
 from . import excel, util
+
+
+def download_image(site, dst):
+  r = requests.get(site, stream=True)
+  if not r.ok:
+    raise RuntimeError(f'Unable to download file: {r.text}')
+  r.raw.decode_content = True
+  with open(dst, 'wb') as fp:
+    shutil.copyfileobj(r.raw, fp)
 
 
 def download_png(site, dst):
   if site[:4] == 'http':
     png = os.path.expanduser('~/Desktop/tmp.png')
-    urlretrieve(site, png)
+    download_image(site, png)
   else:
     png = site
   im = Image.open(png).convert('RGBA')
@@ -25,7 +34,7 @@ def download_png(site, dst):
 
 def download_jpg(site, dst):
   if site[:4] == 'http':
-    urlretrieve(site, dst)
+    download_image(site, dst)
   else:
     os.rename(site, dst)
 
