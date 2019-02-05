@@ -33,22 +33,16 @@ def initialize_logger():
   for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 
-  stream_handler = logging.StreamHandler()
-  if util.dry_run:
-    stream_handler.setFormatter(util.LogFormatter())
-  else:
-    stream_handler.terminator = ' '*20
-    stream_handler.setFormatter(logging.Formatter('\r%(message)s'))
-    file_handler = logging.FileHandler(util.LOG_FILE)
-    file_handler.setFormatter(util.LogFormatter())
-    logging.root.addHandler(file_handler)
-
-  logging.root.addHandler(stream_handler)
+  handler = logging.StreamHandler() if util.dry_run else logging.FileHandler(util.LOG_FILE)
+  handler.setFormatter(util.LogFormatter())
+  logging.root.addHandler(handler)
   logging.root.setLevel(logging.INFO)
 
 
 def main():
   util.dry_run = len(sys.argv) > 1 and sys.argv[1] == '--dry-run'
+  if not util.dry_run:
+    print('Syncing...')
 
   initialize_logger()
   logging.info(f'Begin Shyr script with dry_run = {util.dry_run}')
@@ -61,6 +55,8 @@ def main():
   if wines_synced or images_uploaded:
     square.download_wines()
   logging.info('Sync complete')
+  if not util.dry_run:
+    print('Sync complete.')
 
 
 if __name__ == '__main__':
