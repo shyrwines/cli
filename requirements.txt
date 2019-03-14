@@ -1,4 +1,4 @@
+firebase-admin
+git+https://github.com/square/connect-python-sdk.git
+google-cloud-firestore
 pandas==0.23.4
-Pillow==5.3.0
-requests==2.20.0
-squareconnect==2.20180918.1
