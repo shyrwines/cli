@@ -14,21 +14,6 @@ def sync_firebase(firebase_wines):
   firebase.upload(util.FIREBASE_FILE, os.path.basename(util.FIREBASE_FILE))
 
 
-def prompt_and_sync(diffs, sync_function):
-  if not diffs:
-    return False
-  sync_function()
-  return True
-
-
-def sync_wines():
-  e = excel.Excel()
-  firebase_wines = e.firebase()
-  prompt_and_sync(util.diff_firebase(firebase_wines), lambda: sync_firebase(firebase_wines))
-  catalog_objects = square.make_catalog_objects(e.square())
-  return prompt_and_sync(catalog_objects, lambda: sync_square(catalog_objects))
-
-
 def initialize_logger():
   for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
@@ -47,13 +32,21 @@ def main():
   initialize_logger()
   logging.info(f'Begin Shyr script with dry_run = {util.dry_run}')
 
-  wines_synced = sync_wines()
+  firebase.sync(util.FACTSHEETS_DIR)
   firebase.sync(util.IMAGES_DIR)
   images_uploaded = square.sync_images()
-  firebase.sync(util.FACTSHEETS_DIR)
 
-  if wines_synced or images_uploaded:
+  e = excel.Excel()
+  catalog_objects = square.make_catalog_objects(e.square())
+  if catalog_objects:
+    sync_square(catalog_objects)
+  if catalog_objects or images_uploaded:
     square.download_wines()
+
+  firebase_wines = e.firebase(util.load(util.SQUARE_FILE))
+  if util.diff_firebase(firebase_wines):
+    sync_firebase(firebase_wines)
+
   logging.info('Sync complete')
   if not util.dry_run:
     print('Sync complete.')

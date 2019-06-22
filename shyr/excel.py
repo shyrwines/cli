@@ -24,10 +24,11 @@ class Excel(object):
     df['Description'].fillna('', inplace=True)
     return df.to_dict('index')
 
-  def firebase(self):
+  def firebase(self, square):
     df = self.df[self.df['No-Adv'] != 'N'].copy()
     df['Count'].fillna(1, inplace=True)
     df.loc[:,'factsheet'] = df['SKU'].apply(lambda x: os.path.isfile(util.FACTSHEET_PATH.format(x)))
+    df.loc[:,'variation_id'] = df['SKU'].apply(lambda x: square[str(x)]['variation_id'])
     df.index = df['Name'].apply(lambda x: util.tokenize(x))
     return {i: {k:v for k,v in d.items() if pd.notnull(v)} for i,d in df.to_dict('index').items()}
 
