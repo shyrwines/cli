@@ -1,15 +1,6 @@
-### Install locally
+# Run script as a package
 
 ```shell
-pip install .
-```
-
-### Make executable with PyInstaller
-
-```shell
-pyinstaller -F \
-  --name shyr \
-  --distpath ~/Desktop \
-  --specpath /tmp \
-  cli.py
+python -m shyr.shyr --dry-run
+python -m shyr.shyr
 ```
