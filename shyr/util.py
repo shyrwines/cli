@@ -41,12 +41,14 @@ def initialize_logger():
 
 def log(msg):
   logging.info(msg)
-  sio.emit('reply', msg, sid)
+  if sio:
+    sio.emit('reply', msg, sid)
 
 
 def log_warning(msg):
   logging.warning(msg)
-  sio.emit('reply', msg, sid)
+  if sio:
+    sio.emit('reply', msg, sid)
 
 
 def save(obj, filename):
