@@ -40,6 +40,12 @@ def initialize_logger():
 
 
 def log(msg):
+  logging.info(msg)
+  sio.emit('reply', msg, sid)
+
+
+def log_warning(msg):
+  logging.warning(msg)
   sio.emit('reply', msg, sid)
 
 
@@ -47,7 +53,7 @@ def save(obj, filename):
   if not dry_run:
     with open(filename, 'w') as fp:
       json.dump(obj, fp, separators=(',', ':'))
-  logging.info(f'Saved {filename}')
+  log(f'Saved {filename}')
 
 
 def load(filename):
@@ -79,13 +85,13 @@ def print_diff(old, new, keys=None):
 
   all_keys = added_keys | removed_keys | diff_keys
   if all_keys:
-    logging.info(f'Changed {new["Name"]}:')
+    log(f'Changed {new["Name"]}:')
     for key in added_keys:
-      logging.info(f'  Added {key} = {new[key]}')
+      log(f'  Added {key} = {new[key]}')
     for key in removed_keys:
-      logging.info(f'  Removed {key} = {old[key]}')
+      log(f'  Removed {key} = {old[key]}')
     for key in diff_keys:
-      logging.info(f'  Changed {key} from {old[key]} to {new[key]}')
+      log(f'  Changed {key} from {old[key]} to {new[key]}')
     return True
   return False
 
@@ -101,8 +107,8 @@ def diff_firebase(new_wines):
   for wine_id in both_wines:
     print_diff(old_wines[wine_id], new_wines[wine_id])
   for wine_id in removed_wines:
-    logging.info('Removed ' + old_wines[wine_id]['Name'])
+    log('Removed ' + old_wines[wine_id]['Name'])
   for wine_id in added_wines:
-    logging.info('Added ' + new_wines[wine_id]['Name'])
+    log('Added ' + new_wines[wine_id]['Name'])
 
   return old_wines != new_wines

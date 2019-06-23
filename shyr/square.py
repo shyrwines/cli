@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import uuid
 
@@ -33,7 +32,7 @@ def make_catalog_objects(new_wines):
       if util.print_diff(square_wines[sku], new, {'Name', 'Description', 'Price'}):
         objects.append(make_catalog_object(new, sku, square_wines[sku]))
     else:
-      logging.info('New wine:', new['Name'])
+      util.log('New wine:', new['Name'])
       objects.append(make_catalog_object(new, sku))
   return objects
 
@@ -76,9 +75,9 @@ def update(objects):
         )
       )
     except ApiException as e:
-      logging.fatal(f'Error while upserting catalog objects: {e}')
+      util.log_warning(f'Error while upserting catalog objects: {e}')
       raise RuntimeError('Error while syncing with Square')
-  logging.info('Upserted catalog objects')
+  util.log('Upserted catalog objects')
 
 
 def sync_images():
@@ -90,10 +89,10 @@ def sync_images():
     if not util.dry_run:
       r = upload_image(util.IMAGE_PATH.format(sku), square_wines[sku]['item_id_image'])
       if not r.ok:
-        logging.error(f'Error while uploading image to Square: {r.text}')
+        util.log_warning(f'Error while uploading image to Square: {r.text}')
         continue
-    logging.info(f'Uploaded {sku}.jpg')
-  logging.info(f'{util.IMAGES_DIR} synced')
+    util.log(f'Uploaded {sku}.jpg')
+  util.log(f'{util.IMAGES_DIR} synced')
   return len(skus_to_upload) != 0
 
 
@@ -129,4 +128,4 @@ def download_wines():
         break
       response = api.list_catalog(cursor=response.cursor, types='ITEM')
     util.save(wines, util.SQUARE_FILE)
-  logging.info('Downloaded wines from Square')
+  util.log('Downloaded wines from Square')

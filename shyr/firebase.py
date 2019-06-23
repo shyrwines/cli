@@ -1,5 +1,4 @@
 from datetime import datetime
-import logging
 import os
 from os.path import basename, isdir, join, getmtime
 from pytz import timezone
@@ -26,17 +25,17 @@ bucket = storage.bucket()
 def upload(src, dst):
   if not util.dry_run:
     bucket.blob(dst).upload_from_filename(src)
-  logging.info(f'Uploaded {basename(src)}')
+  util.log(f'Uploaded {basename(src)}')
 
 
 def sync(directory):
   if directory not in EXTENSIONS:
-    logging.error(f'{directory} is not one of: {set(EXTENSIONS.keys())}')
+    util.log_warning(f'{directory} is not one of: {set(EXTENSIONS.keys())}')
     return
 
   local_dir = join(util.BASE_DIR, directory)
   if not isdir(local_dir):
-    logging.error(f'{local_dir} is not a directory or does not exist')
+    util.log_warning(f'{local_dir} is not a directory or does not exist')
     return
 
   file_regex = re.compile(r'\d{7}\.' + EXTENSIONS[directory])
@@ -45,11 +44,11 @@ def sync(directory):
     if filename == '.DS_Store':
       continue
     if not file_regex.match(filename):
-      logging.error(f'{filename} is incorrectly formatted')
+      util.log_warning(f'{filename} is incorrectly formatted')
       continue
     remote_path = join(directory, filename)
     local_path = join(local_dir, filename)
     mtime = datetime.fromtimestamp(getmtime(local_path), timezone('US/Pacific'))
     if remote_path not in blobs or mtime > blobs[remote_path]:
       upload(local_path, remote_path)
-  logging.info(f'{directory} synced')
+  util.log(f'{directory} synced')
