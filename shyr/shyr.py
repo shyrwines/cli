@@ -14,23 +14,11 @@ def sync_firebase(firebase_wines):
   firebase.upload(util.FIREBASE_FILE, os.path.basename(util.FIREBASE_FILE))
 
 
-def initialize_logger():
-  for handler in logging.root.handlers[:]:
-    logging.root.removeHandler(handler)
-
-  handler = logging.StreamHandler() if util.dry_run else logging.FileHandler(util.LOG_FILE)
-  handler.setFormatter(util.LogFormatter())
-  logging.root.addHandler(handler)
-  logging.root.setLevel(logging.INFO)
-
-
 def main():
-  util.dry_run = len(sys.argv) > 1 and sys.argv[1] == '--dry-run'
-  if not util.dry_run:
-    print('Syncing...')
+  # util.dry_run = len(sys.argv) > 1 and sys.argv[1] == '--dry-run'
 
-  initialize_logger()
-  logging.info(f'Begin Shyr script with dry_run = {util.dry_run}')
+  util.initialize_logger()
+  util.log(f'Begin Shyr script with dry_run = {util.dry_run}')
 
   firebase.sync(util.FACTSHEETS_DIR)
   firebase.sync(util.IMAGES_DIR)
@@ -47,9 +35,7 @@ def main():
   if util.diff_firebase(firebase_wines):
     sync_firebase(firebase_wines)
 
-  logging.info('Sync complete')
-  if not util.dry_run:
-    print('Sync complete.')
+  util.log('Sync complete')
 
 
 if __name__ == '__main__':

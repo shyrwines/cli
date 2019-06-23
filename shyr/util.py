@@ -20,12 +20,27 @@ WHITESPACE = re.compile(r'[-\s]+')
 CHECKMARK = u' \u2714'
 
 dry_run = True
-
+sid = None
+sio = None
 
 class LogFormatter(logging.Formatter):
   def format(self, record):
     location = '{0.module}.{0.funcName}:{0.lineno}'.format(record)
     return '{0} {1:25} {2.levelname:>5}: {2.msg}'.format(self.formatTime(record), location, record)
+
+
+def initialize_logger():
+  for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+
+  handler = logging.StreamHandler() if dry_run else logging.FileHandler(LOG_FILE)
+  handler.setFormatter(LogFormatter())
+  logging.root.addHandler(handler)
+  logging.root.setLevel(logging.INFO)
+
+
+def log(msg):
+  sio.emit('reply', msg, sid)
 
 
 def save(obj, filename):

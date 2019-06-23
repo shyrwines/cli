@@ -1,6 +1,8 @@
+eventlet
 firebase-admin
 git+https://github.com/square/connect-python-sdk.git
 google-cloud-firestore
 pandas
+python-socketio
 requests
 xlrd
