@@ -114,7 +114,7 @@ def download_wines():
           # Exclude Shipping & Handling, which has no price
           continue
         wines[variation.item_variation_data.sku] = {
-          'image_exists': wine.item_data.image_url != None,
+          'image_exists': wine.image_id != None,
           'item_id': wine.id,
           'item_id_image': wine.catalog_v1_ids[0].catalog_v1_id if wine.catalog_v1_ids else wine.id,
           'item_version': wine.version,
