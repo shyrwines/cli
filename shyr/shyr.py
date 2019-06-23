@@ -15,7 +15,7 @@ def sync_firebase(firebase_wines):
 
 
 def main():
-  # util.dry_run = len(sys.argv) > 1 and sys.argv[1] == '--dry-run'
+  util.dry_run = len(sys.argv) > 1 and sys.argv[1] == '--dry-run'
 
   util.initialize_logger()
   util.log(f'Begin Shyr script with dry_run = {util.dry_run}')
