@@ -92,7 +92,7 @@ def sync_images():
         util.log_warning(f'Error while uploading image to Square: {r.text}')
         continue
     util.log(f'Uploaded {sku}.jpg')
-  util.log(f'{util.IMAGES_DIR} synced')
+  util.log(f'{util.IMAGES_DIR} synced with Square')
   return len(skus_to_upload) != 0
 
 

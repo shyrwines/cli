@@ -51,4 +51,4 @@ def sync(directory):
     mtime = datetime.fromtimestamp(getmtime(local_path), timezone('US/Pacific'))
     if remote_path not in blobs or mtime > blobs[remote_path]:
       upload(local_path, remote_path)
-  util.log(f'{directory} synced')
+  util.log(f'{directory} synced with website')
