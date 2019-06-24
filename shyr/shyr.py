@@ -14,7 +14,6 @@ def sync_firebase(firebase_wines):
 
 def main():
   util.initialize()
-  util.log(f'Begin Shyr script with dry_run = {util.dry_run}')
 
   e = excel.Excel()
 

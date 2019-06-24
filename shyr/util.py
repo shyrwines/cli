@@ -30,6 +30,7 @@ class LogFormatter(logging.Formatter):
 
 
 def initialize():
+  global dry_run
   dry_run = len(sys.argv) > 1 and sys.argv[1] == '--dry-run'
 
   for handler in logging.root.handlers[:]:
