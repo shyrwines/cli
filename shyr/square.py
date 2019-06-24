@@ -75,7 +75,7 @@ def update(objects):
         )
       )
     except ApiException as e:
-      util.log_warning(f'Error while upserting catalog objects: {e}')
+      util.log_error(f'Error while upserting catalog objects: {e}')
       raise RuntimeError('Error while syncing with Square')
   util.log('Upserted catalog objects')
 

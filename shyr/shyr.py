@@ -1,6 +1,4 @@
-import logging
 import os
-import sys
 
 from . import excel, firebase, square, util
 
@@ -15,16 +13,15 @@ def sync_firebase(firebase_wines):
 
 
 def main():
-  util.dry_run = len(sys.argv) > 1 and sys.argv[1] == '--dry-run'
-
-  util.initialize_logger()
+  util.initialize()
   util.log(f'Begin Shyr script with dry_run = {util.dry_run}')
+
+  e = excel.Excel()
 
   firebase.sync(util.FACTSHEETS_DIR)
   firebase.sync(util.IMAGES_DIR)
   images_uploaded = square.sync_images()
 
-  e = excel.Excel()
   catalog_objects = square.make_catalog_objects(e.square())
   if catalog_objects:
     sync_square(catalog_objects)

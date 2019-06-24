@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import sys
 import unicodedata
 
 BASE_DIR = os.path.expanduser('~/Dropbox/Shyr/')
@@ -25,11 +26,12 @@ sio = None
 
 class LogFormatter(logging.Formatter):
   def format(self, record):
-    location = '{0.module}.{0.funcName}:{0.lineno}'.format(record)
-    return '{0} {1:25} {2.levelname:>5}: {2.msg}'.format(self.formatTime(record), location, record)
+    return '{0} {1.levelname:>8}: {1.msg}'.format(self.formatTime(record), record)
 
 
-def initialize_logger():
+def initialize():
+  dry_run = len(sys.argv) > 1 and sys.argv[1] == '--dry-run'
+
   for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
 
@@ -42,13 +44,20 @@ def initialize_logger():
 def log(msg):
   logging.info(msg)
   if sio:
-    sio.emit('reply', msg, sid)
+    sio.emit('info', msg, sid)
 
 
 def log_warning(msg):
   logging.warning(msg)
   if sio:
-    sio.emit('reply', msg, sid)
+    sio.emit('warning', msg, sid)
+
+
+def log_error(msg):
+  logging.error(msg)
+  if sio:
+    sio.emit('error', msg, sid)
+    sio.emit('fail', room=sid)
 
 
 def save(obj, filename):

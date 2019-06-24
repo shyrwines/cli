@@ -2,17 +2,25 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+    <style>
+      .orange { color: orange }
+      .red { color: red }
+    </style>
   </head>
   <body>
     <button onclick="sync()">Sync</button>
     <script>
-    const socket = io();
-    socket.on('reply', msg => {
-      const div = document.createElement('div')
-      div.innerText = msg
-      document.body.appendChild(div)
-    })
-    function sync() { socket.send(null); }
+      const socket = io();
+      socket.on('info', msg => append(msg))
+      socket.on('warning', msg => append('<b class="orange">WARNING:</b> ' + msg))
+      socket.on('error', msg => append('<b class="red">ERROR:</b> ' + msg))
+      socket.on('fail', () => append('<b class="red">SYNC FAILED</b>'))
+      function sync() { socket.send(null); }
+      function append(msg) {
+        const div = document.createElement('div')
+        div.innerHTML = msg
+        document.body.appendChild(div)
+      }
     </script>
   </body>
 </html>
