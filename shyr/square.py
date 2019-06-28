@@ -32,7 +32,7 @@ def make_catalog_objects(new_wines):
       if util.print_diff(square_wines[sku], new, {'Name', 'Description', 'Price'}):
         objects.append(make_catalog_object(new, sku, square_wines[sku]))
     else:
-      util.log('New wine:', new['Name'])
+      util.log('New wine: ' + new['Name'])
       objects.append(make_catalog_object(new, sku))
   return objects
 
