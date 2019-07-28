@@ -2,18 +2,9 @@ import os
 
 from . import excel, firebase, square, util
 
-
-def sync_square(catalog_objects):
-  square.update(catalog_objects)
-
-
-def sync_firebase(firebase_wines):
-  util.save(firebase_wines, util.FIREBASE_FILE)
-  firebase.upload(util.FIREBASE_FILE, os.path.basename(util.FIREBASE_FILE))
-
-
-def main():
+def sync():
   util.initialize()
+  util.log(f'Starting sync with dry_run = {util.dry_run}')
 
   e = excel.Excel()
 
@@ -23,15 +14,23 @@ def main():
 
   catalog_objects = square.make_catalog_objects(e.square())
   if catalog_objects:
-    sync_square(catalog_objects)
+    square.update(catalog_objects)
   if catalog_objects or images_uploaded:
     square.download_wines()
 
   firebase_wines = e.firebase(util.load(util.SQUARE_FILE))
   if util.diff_firebase(firebase_wines):
-    sync_firebase(firebase_wines)
+    util.save(firebase_wines, util.FIREBASE_FILE)
+    firebase.upload(util.FIREBASE_FILE, os.path.basename(util.FIREBASE_FILE))
 
   util.log('Sync complete')
+
+
+def main():
+  try:
+    sync()
+  except Exception as e:
+    util.log_error()
 
 
 if __name__ == '__main__':
