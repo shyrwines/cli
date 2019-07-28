@@ -57,7 +57,7 @@ def log_warning(msg):
 def log_error(msg):
   logging.error(msg)
   if sio:
-    sio.emit('error', msg, sid)
+    sio.emit('error', f'<code>{msg}</code>', sid)
     sio.emit('fail', room=sid)
 
 

@@ -1,4 +1,5 @@
 import os
+from traceback import format_exc
 
 from . import excel, firebase, square, util
 
@@ -29,8 +30,8 @@ def sync():
 def main():
   try:
     sync()
-  except Exception as e:
-    util.log_error()
+  except Exception:
+    util.log_error('Encountered exception:\n' + format_exc())
 
 
 if __name__ == '__main__':
