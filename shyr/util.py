@@ -1,11 +1,10 @@
 import json
 import logging
-import os
 import re
 import sys
 import unicodedata
 
-BASE_DIR = os.path.expanduser('~/Dropbox/Shyr/')
+BASE_DIR = '/dropbox/'
 EXCEL_FILE = BASE_DIR + 'ShyrWineList.xlsx'
 ENV_FILE = BASE_DIR + 'cli/env.json'
 SQUARE_FILE = BASE_DIR + 'cli/square.json'
